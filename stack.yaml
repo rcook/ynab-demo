@@ -1,0 +1,6 @@
+resolver: lts-10.4
+#extra-deps:
+#- Cabal-1.24.2.0
+#- encoding-0.8.2
+#- process-1.4.3.0
+#- regex-compat-0.93.1
