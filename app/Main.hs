@@ -1,3 +1,16 @@
+{-
+Simple program demonstrating how to extract register data from data
+downloaded from YNAB (https://www.youneedabudget.com/)
+You'll need the following Haskell packages in your .cabal file in addition to "base":
+
+* bytestring
+* cassava
+* directory
+* filepath
+* text
+* vector
+-}
+
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main (main) where
@@ -24,7 +37,7 @@ data Row =
         !Text -- Category Group
         !Text -- Category
         !Text -- Memo
-        !Text -- Outflow
+        !Text -- Inflow
         !Text -- Outflow
         !Text -- Cleared
     deriving Show
@@ -39,31 +52,9 @@ instance FromNamedRecord Row where
         <*> m .: "Category Group"
         <*> m .: "Category"
         <*> m .: "Memo"
-        <*> m .: "Outflow"
+        <*> m .: "Inflow"
         <*> m .: "Outflow"
         <*> m .: "Cleared"
-
-{-
-rawBS <- ByteString.readFile expandedCsvPath
-let (encName, bs) = fromMaybe
-                        (defaultEncName, rawBS)
-                        (asum $ map (\(bom, encName') ->
-                            case ByteString.stripPrefix bom rawBS of
-                                Nothing -> Nothing
-                                Just bs' -> Just (encName', bs')) boms)
-    encoding = encodingFromString encName
-print $ head (lines (decodeLazyByteString encoding bs))
--}
-
-{-
-boms :: [(ByteString, String)]
-boms =
-    [ ("\xef\xbb\xbf", "UTF8" )
-    ]
-
-defaultEncName :: String
-defaultEncName = "UTF8"
--}
 
 main :: IO ()
 main = do
@@ -84,8 +75,8 @@ dumpCsvFile csvPath = do
     let rows = case (decodeByName bs :: Either String (Header, Vector Row)) of
                 Left e -> error e
                 Right (_, rows') -> rows'
-    for_ rows $ \(Row account flag _ _ _ _ _ _ _ _ _) ->
-        putStrLn $ printf "\"%s\" \"%s\"" account flag
+    for_ rows $ \(Row account _ _ _ _ _ _ _ inflow outflow _) ->
+        putStrLn $ printf "%s: inflow=%s outflow=%s" account inflow outflow
 
 stripUtf8BomPrefix :: ByteString -> ByteString
 stripUtf8BomPrefix bs = fromMaybe bs (ByteString.stripPrefix "\xef\xbb\xbf" bs)
